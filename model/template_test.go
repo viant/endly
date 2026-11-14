@@ -160,7 +160,7 @@ func TestTemplateInvalidSubPathReturnsDiagnostic(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			source := fmt.Sprintf("pipeline:\n  collect:\n    subPath: %s\n    data: {'[]rows': '@ci_ads.json'}\n    template:\n      collected: {action: nop}\n", tc.subpath)
+			source := fmt.Sprintf("pipeline:\n  collect:\n    subPath: %s\n    data: {'[]rows': '@app_db.json'}\n    template:\n      collected: {action: nop}\n", tc.subpath)
 			input := filepath.Join(root, "invalid.yaml")
 			if err := os.WriteFile(input, []byte(source), 0600); err != nil {
 				t.Fatal(err)

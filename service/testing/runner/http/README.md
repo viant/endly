@@ -187,130 +187,34 @@ Repeat till test host status is 'READY', keep testing for status no more than 15
 
 
 <a name="sequential"></a>
-**Sequential request with data extraction**
+**Sequential requests with data extraction**
 
+Create a sample job, extract its status URL, and use the extracted value in the next request.
 
-@http.json
 ```json
-
 {
-	"Requests": [
-		{
-			"Method": "POST",
-			"URL": "http://${bidderHost}/bidder",
-			"Body": "$bid0",
-			"Extraction": [
-            				{
-            					"Key": "winURI",
-            					"RegExpr": "(/pixel/won[^\\']+)",
-            					"Reset": true
-            				},
-            				{
-            					"Key": "clickURI",
-            					"RegExpr": "(/pixel/click[^\\']+)",
-            					"Reset": true
-            				}
-            ],
-			"Variables": [
-				{
-					"Name": "AUCTION_PRICE",
-					"From": "seatbid[0].bid[0].price"
-				},
-                {
-                    "Name": "winURL",
-                    "Value": "http://${loggerHost}/logger${winURI}"
-                },
-                {
-                    "Name": "clickURL",
-                    "Value": "http://${loggerHost}/logger${clickURI}"
-                }
-			]
-		},
-		{
-			"When": "${httpTrips.Response[0].Body}://pixel/won//",
-			"URL": "${httpTrips.Data.winURL}",
-			"Method": "GET"
-		},
-		{
-			"When": "${httpTrips.Response[0].Body}://pixel/click//",
-			"URL": "${httpTrips.Data.clickURL}",
-			"Method": "GET"
-		}
-	]
+  "Requests": [
+    {
+      "Method": "POST",
+      "URL": "http://${apiHost}/jobs",
+      "JSONBody": {"name": "sample-job", "items": [{"id": "item-1", "quantity": 2}]},
+      "Extraction": [{"Key": "statusURI", "RegExpr": "(/jobs/[0-9]+)", "Reset": true}],
+      "Variables": [
+        {"Name": "jobId", "From": "job.id"},
+        {"Name": "statusURL", "Value": "http://${apiHost}${statusURI}"}
+      ]
+    },
+    {
+      "Method": "GET",
+      "URL": "${httpTrips.Data.statusURL}"
+    }
+  ]
 }
 ```
 
-Where $bidX is defined in separated file [stichted with Neatly](#workflow)
+The first response can contain `{"job":{"id":42,"statusURI":"/jobs/42"}}`.
+Extraction and structured variables connect the requests without hardcoding the generated identifier.
 
-@bids.json
-```json
-{
-	"bid0": {
-		"app": {
-			"cat": [
-				"IAB14"
-			],
-			"domain": "http://www.wildisthewind.com/",
-			"id": "yyyyy",
-			"name": "RTB TEST",
-			"publisher": {
-				"id": "xxxxxx",
-				"name": "Match Media Group"
-			}
-		},
-		"at": 2,
-		"badv": [
-			"go-text.me/"
-		],
-		"bcat": [
-			"IAB7-39"
-		],
-		"device": {
-			"carrier": "310-410",
-			"devicetype": 1,
-			"dpidsha1": "${userProfile.uuid}",
-			"ext": {
-				"idfa": "${userProfile.uuid}"
-			},
-			"geo": {
-				"city": "Whitewright",
-				"country": "USA"
-			},
-			"language": "en",
-			"make": "Apple",
-			"model": "iPhone",
-			"os": "iOS",
-			"osv": "6.1",
-			"ua": "Mozilla/5.0 (iPhone; U; CPU iPhone 6_1 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Mobile/7E18 Grindr/1.8.5 (iPhone3,1/6.1)"
-		},
-		"imp": [
-			{
-				"banner": {
-					"api": [
-						3
-					],
-					"btype": [
-						4
-					],
-					"h": 300,
-					"pos": 1,
-					"w": 250
-				}
-			}
-		]
-	},
-	"bid1": {
-		
-	}
-}
-```
-
-
-The following example extracts from _POST Body_ tracking URL with regular expression matches 
-and from structured POST Body _AUCTION_PRICE_ and variables that define subsequent URL. 
-
-
-  
 <a name="assert"></a>
 **Request with validation**
 

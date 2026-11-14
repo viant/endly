@@ -127,9 +127,9 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			parameters: [][]interface{}{{"qa@example.test"}},
 		},
 		{
-			command:    `page.getByRole("dialog", "Edit Advertiser Permission").click()`,
+			command:    `page.getByRole("dialog", "Edit Project Permission").click()`,
 			selectorBy: "xpath",
-			selector:   `//*[@role='dialog'][normalize-space(.)='Edit Advertiser Permission' or @aria-label='Edit Advertiser Permission' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Edit Advertiser Permission']/@id)]`,
+			selector:   `//*[@role='dialog'][normalize-space(.)='Edit Project Permission' or @aria-label='Edit Project Permission' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Edit Project Permission']/@id)]`,
 			methods:    []string{"Click"},
 		},
 		{
@@ -145,15 +145,15 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			methods:    []string{"Click"},
 		},
 		{
-			command:    `page.getByRole("rowheader", "Advertiser").click()`,
+			command:    `page.getByRole("rowheader", "Project").click()`,
 			selectorBy: "xpath",
-			selector:   `(//*[@role='rowheader'] | //th[@scope='row' or @scope='rowgroup'])[normalize-space(.)='Advertiser' or @aria-label='Advertiser' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Advertiser']/@id)]`,
+			selector:   `(//*[@role='rowheader'] | //th[@scope='row' or @scope='rowgroup'])[normalize-space(.)='Project' or @aria-label='Project' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Project']/@id)]`,
 			methods:    []string{"Click"},
 		},
 		{
-			command:    `page.getByRole("cell", "Campaign Viewer").click()`,
+			command:    `page.getByRole("cell", "Job Viewer").click()`,
 			selectorBy: "xpath",
-			selector:   `(//*[@role='cell'] | //td)[normalize-space(.)='Campaign Viewer' or @aria-label='Campaign Viewer' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Campaign Viewer']/@id)]`,
+			selector:   `(//*[@role='cell'] | //td)[normalize-space(.)='Job Viewer' or @aria-label='Job Viewer' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Job Viewer']/@id)]`,
 			methods:    []string{"Click"},
 		},
 		{
@@ -163,9 +163,9 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			methods:    []string{"Click"},
 		},
 		{
-			command:    `page.getByRole("row", "Advertiser Owner").click()`,
+			command:    `page.getByRole("row", "Project Owner").click()`,
 			selectorBy: "xpath",
-			selector:   `(//*[@role='row'] | //tr)[normalize-space(.)='Advertiser Owner' or @aria-label='Advertiser Owner' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Advertiser Owner']/@id)]`,
+			selector:   `(//*[@role='row'] | //tr)[normalize-space(.)='Project Owner' or @aria-label='Project Owner' or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)='Project Owner']/@id)]`,
 			methods:    []string{"Click"},
 		},
 		{

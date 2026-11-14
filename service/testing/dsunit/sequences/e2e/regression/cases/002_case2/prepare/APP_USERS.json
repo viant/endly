@@ -1,0 +1,17 @@
+[
+  {
+    "ID": "$Sequences.APP_USERS/${tag}.1",
+    "ACCOUNT_ID": 197,
+    "FIRST_NAME": "Dept",
+    "EMAIL": "dev2@example.test",
+    "PHONE": "PHONE_2",
+    "STR_ID": "STR_ID_${Sequences.APP_USERS}"
+  },
+  {
+    "ID": "$Sequences.APP_USERS/${tag}.2",
+    "ACCOUNT_ID": 197,
+    "EMAIL": "dev2@example.test",
+    "PHONE": "PHONE_2",
+    "STR_ID": "STR_ID_${Sequences.APP_USERS}"
+  }
+]

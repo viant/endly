@@ -68,23 +68,23 @@ func TestAsTableRecordsSpreadsheetRowStrings(t *testing.T) {
 			state := data.NewMap()
 			tag := "spreadsheet_direct_bulkimport"
 			state.Put("tag", tag)
-			state.Put("Sequences", data.Map{"CI_AD_ORDER": 1})
+			state.Put("Sequences", data.Map{"APP_ORDER": 1})
 			var fixtures []interface{}
 			for i, suffix := range []string{"", "", "", ".cpsv", ".cpsv_preserve"} {
 				rowTag := tag
 				if tagged {
 					rowTag = "${tag}"
 				}
-				row := map[string]interface{}{"ID": fmt.Sprintf("$Sequences.CI_AD_ORDER/%s.%d", rowTag, i+1), "STR_ID": "a$Sequences.CI_AD_ORDER/" + rowTag + suffix}
+				row := map[string]interface{}{"ID": fmt.Sprintf("$Sequences.APP_ORDER/%s.%d", rowTag, i+1), "STR_ID": "a$Sequences.APP_ORDER/" + rowTag + suffix}
 				if tagged {
 					row["!tag"] = tag
 				}
 				fixtures = append(fixtures, row)
 			}
-			state.Put("fixtures", data.Map{"CI_AD_ORDER": fixtures})
+			state.Put("fixtures", data.Map{"APP_ORDER": fixtures})
 			actual, err := dsunit.AsTableRecords("fixtures/owned", state)
 			require.NoError(t, err)
-			rows := actual.(map[string][]map[string]interface{})["CI_AD_ORDER"]
+			rows := actual.(map[string][]map[string]interface{})["APP_ORDER"]
 			for i, suffix := range []string{"", "", "", ".cpsv", ".cpsv_preserve"} {
 				require.EqualValues(t, i+1, rows[i]["ID"])
 				require.Equal(t, fmt.Sprintf("a%d/%s%s", i+1, tag, suffix), state.ExpandAsText(rows[i]["STR_ID"].(string)))

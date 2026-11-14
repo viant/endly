@@ -45,7 +45,7 @@ pipeline:
 #    sourceKey: Page
 #    sleepTimeMs: 10000
 #    dest:
-#      URL: /Users/awitas/go/src/github.com/viant/endly/service/testing/runner/webdriver/test/test.html
+#      URL: /workspace/endly/example/ui/sso/static/signin/index.html
 
 
   defer:

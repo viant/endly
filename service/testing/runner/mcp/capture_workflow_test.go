@@ -18,7 +18,7 @@ func TestReadCaptureLoadedWorkflowUsesFilteredResponsePaths(t *testing.T) {
 	dir := t.TempDir()
 	file := filepath.Join(dir, "browser.jsonl")
 	var lines []byte
-	for _, window := range []string{"campaign", "advertiser"} {
+	for _, window := range []string{"job", "project"} {
 		request, _ := json.Marshal(map[string]interface{}{"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": map[string]interface{}{"name": "namespaces/preview", "arguments": map[string]interface{}{"resource": map[string]interface{}{"uri": "window://platform/" + window}}}})
 		response, _ := json.Marshal(map[string]interface{}{"jsonrpc": "2.0", "id": 7, "result": map[string]interface{}{"structuredContent": map[string]interface{}{"sessionId": window + "-session"}}})
 		event, err := json.Marshal(map[string]interface{}{"type": "network", "tx": map[string]interface{}{"Status": 200, "RequestBody": map[string]interface{}{"Data": string(request)}, "ResponseBody": map[string]interface{}{"Data": string(response)}}})
@@ -41,7 +41,7 @@ func TestReadCaptureLoadedWorkflowUsesFilteredResponsePaths(t *testing.T) {
     action: mcp/runner:readCapture
     source: {URL: '` + filepath.ToSlash(file) + `'}
     methods: [namespaces/preview]
-    arguments: {resource: {uri: 'window://platform/advertiser'}}
+    arguments: {resource: {uri: 'window://platform/project'}}
   count:
     action: validator:assert
     actual: $Len($captured.Transactions)
@@ -62,7 +62,7 @@ func TestReadCaptureLoadedWorkflowUsesFilteredResponsePaths(t *testing.T) {
   child:
     action: validator:assert
     actual: $childSession
-    expect: advertiser-session
+    expect: project-session
   required:
     when: $count.FailedCount > 0 || $method.FailedCount > 0 || $child.FailedCount > 0
     action: workflow:fail

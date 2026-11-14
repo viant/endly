@@ -10,11 +10,11 @@ import (
 
 func TestNormalizeValueDistinguishesOrderedYAMLObjectsFromLists(t *testing.T) {
 	var source yaml.MapSlice
-	require.NoError(t, yaml.Unmarshal([]byte("ci_ads: {}\nroles: []\nnested:\n  object: {}\n  list: []\n"), &source))
+	require.NoError(t, yaml.Unmarshal([]byte("app_db: {}\nroles: []\nnested:\n  object: {}\n  list: []\n"), &source))
 	actual, err := NormalizeValue(source)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
-		"ci_ads": map[string]interface{}{}, "roles": []interface{}{},
+		"app_db": map[string]interface{}{}, "roles": []interface{}{},
 		"nested": map[string]interface{}{"object": map[string]interface{}{}, "list": []interface{}{}},
 	}, actual)
 	for _, object := range []yaml.MapSlice{nil, {}} {

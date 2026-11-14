@@ -15,12 +15,12 @@ func TestAsTableRecordsPublishesAliasesForTemplateInvocation(t *testing.T) {
 	dir := t.TempDir()
 	fixture := filepath.Join(dir, "cases", "001_member", "dbsetup")
 	require.NoError(t, os.MkdirAll(fixture, 0700))
-	require.NoError(t, os.WriteFile(filepath.Join(fixture, "CI_CONTACTS.json"), []byte(`[{"ID":"$Sequences.CI_CONTACTS/${tag}.member","NAME":"member"}]`), 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(fixture, "APP_USERS.json"), []byte(`[{"ID":"$Sequences.APP_USERS/${tag}.member","NAME":"member"}]`), 0600))
 	source := `init:
-  ci_ads: {}
+  app_db: {}
   observed: {}
   Sequences:
-    CI_CONTACTS: 100
+    APP_USERS: 100
 pipeline:
   populate:
     action: run
@@ -28,18 +28,18 @@ pipeline:
   cases:
     tag: $pathMatch
     data:
-      '[]ci_ads_dbsetup': '@dbsetup'
+      '[]app_db_dbsetup': '@dbsetup'
     subPath: cases/${index}_*
     template:
       check:
         action: nop
         init:
-          member: ${ci_ads.CI_CONTACTS.${tag}.member}
+          member: ${app_db.APP_USERS.${tag}.member}
           observed.ID: ${member.ID}
 `
 	path := filepath.Join(dir, "run.yaml")
 	require.NoError(t, os.WriteFile(path, []byte(source), 0600))
-	require.NoError(t, os.WriteFile(filepath.Join(dir, "populate.yaml"), []byte("pipeline:\n  convert:\n    action: nop\n    init:\n      rows: $AsTableRecords('data.ci_ads_dbsetup/ci_ads')\n"), 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "populate.yaml"), []byte("pipeline:\n  convert:\n    action: nop\n    init:\n      rows: $AsTableRecords('data.app_db_dbsetup/app_db')\n"), 0600))
 	manager := endly.New()
 	manager.Register(workflow.New())
 	ctx := manager.NewContext(nil)

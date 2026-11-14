@@ -14,7 +14,7 @@ func TestNestedRequestKeepsRootFallbackAndSpecificPrecedence(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, os.Chdir(root))
 	t.Cleanup(func() { require.NoError(t, os.Chdir(previous)) })
-	request := "regression/database/ci_ads/setup.json"
+	request := "regression/database/app_db/setup.json"
 	specific := filepath.Join(root, "regression/database")
 	write := func(base, value string) {
 		path := filepath.Join(base, request)
@@ -24,7 +24,7 @@ func TestNestedRequestKeepsRootFallbackAndSpecificPrecedence(t *testing.T) {
 	write(root, "root")
 	load := func(instance string) map[string]interface{} {
 		p := Inlined{baseURL: specific, tagPathURL: instance}
-		attributes := map[string]interface{}{"action": "run", "request": "@regression/database/ci_ads/setup"}
+		attributes := map[string]interface{}{"action": "run", "request": "@regression/database/app_db/setup"}
 		actual := map[string]interface{}{}
 		err := p.loadRequest(attributes, actual, nil)
 		require.NoError(t, err)

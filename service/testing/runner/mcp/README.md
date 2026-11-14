@@ -20,7 +20,7 @@ pipeline:
     action: mcp/runner:readCapture
     source: {URL: '${runDir}/browser.jsonl'}
     methods: [namespaces/preview]
-    arguments: {resource: {uri: 'window://platform/advertiser'}}
+    arguments: {resource: {uri: 'window://platform/project'}}
   check:
     action: validator:assert
     each: true

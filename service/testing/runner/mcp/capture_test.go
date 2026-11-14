@@ -12,7 +12,7 @@ import (
 	"github.com/viant/endly/model/location"
 )
 
-const captureRequest = `{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"namespaces/preview","arguments":{"resource":{"uri":"window://platform/advertiser"}}}}`
+const captureRequest = `{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"namespaces/preview","arguments":{"resource":{"uri":"window://platform/project"}}}}`
 const captureResponse = `{"jsonrpc":"2.0","id":7,"result":{"structuredContent":{"sessionId":"child-1"}}}`
 
 func captureLine(t *testing.T, request, response *captureBody) string {
@@ -90,7 +90,7 @@ func TestReadCaptureRejectsIncompleteOrAmbiguousEvidence(t *testing.T) {
 		{"duplicate request", textBody("[" + captureRequest + "," + captureRequest + "]"), textBody(captureResponse), "duplicate request ID"},
 		{"invalid body", textBody("SECRET-SENTINEL"), textBody(captureResponse), "request body has no JSON"},
 		{"invalid base64", &captureBody{Encoding: "base64", Data: "SECRET-SENTINEL"}, textBody(captureResponse), "invalid base64"},
-		{"invalid arguments", textBody(strings.ReplaceAll(captureRequest, `{"resource":{"uri":"window://platform/advertiser"}}`, `[]`)), textBody(captureResponse), "arguments must be an object"},
+		{"invalid arguments", textBody(strings.ReplaceAll(captureRequest, `{"resource":{"uri":"window://platform/project"}}`, `[]`)), textBody(captureResponse), "arguments must be an object"},
 		{"mixed result and error", textBody(captureRequest), textBody(`{"jsonrpc":"2.0","id":7,"result":{},"error":{}}`), "both result and error"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -137,15 +137,15 @@ func TestReadCaptureNativeRoute(t *testing.T) {
 }
 
 func TestReadCaptureArgumentSubsetPreservesScopeAndTypes(t *testing.T) {
-	request := `{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"namespaces/preview","arguments":{"resource":{"uri":"window://platform/advertiser","revision":"working"},"ids":[7],"flag":false,"cleared":null}}}`
+	request := `{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"namespaces/preview","arguments":{"resource":{"uri":"window://platform/project","revision":"working"},"ids":[7],"flag":false,"cleared":null}}}`
 	line := captureLine(t, textBody(request), textBody(captureResponse))
 	for _, tc := range []struct {
 		name      string
 		arguments map[string]interface{}
 		count     int
 	}{
-		{"nested URI", map[string]interface{}{"resource": map[string]interface{}{"uri": "window://platform/advertiser"}}, 1},
-		{"different URI", map[string]interface{}{"resource": map[string]interface{}{"uri": "window://platform/campaign"}}, 0},
+		{"nested URI", map[string]interface{}{"resource": map[string]interface{}{"uri": "window://platform/project"}}, 1},
+		{"different URI", map[string]interface{}{"resource": map[string]interface{}{"uri": "window://platform/job"}}, 0},
 		{"numeric array", map[string]interface{}{"ids": []interface{}{7}}, 1},
 		{"string array", map[string]interface{}{"ids": []interface{}{"7"}}, 0},
 		{"false", map[string]interface{}{"flag": false}, 1},

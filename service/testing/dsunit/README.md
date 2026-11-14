@@ -305,36 +305,36 @@ For coherence and clarity, this test data is stored in a 'prepare' folder within
 This organization allows each test case to be explicitly linked with its requisite data.
 
 
-Example JSON structure for **CI_CONTACTS** table data:
+Example JSON structure for **APP_USERS** table data:
 ```json
 [
 {
-"ID": "$sequencer.CI_CONTACTS/${tag}.1",
+"ID": "$sequencer.APP_USERS/${tag}.1",
 "ACCOUNT_ID": 197,
 "FIRST_NAME": "Dept",
 "PHONE": "PHONE_2",
-"STR_ID": "STR_ID_${sequencer.CI_CONTACTS}"
+"STR_ID": "STR_ID_${sequencer.APP_USERS}"
 },
 {
-"ID": "$sequencer.CI_CONTACTS/${tag}.2",
+"ID": "$sequencer.APP_USERS/${tag}.2",
 "ACCOUNT_ID": 197,
 "PHONE": "PHONE_2",
-"STR_ID": "STR_ID_${sequencer.CI_CONTACTS}"
+"STR_ID": "STR_ID_${sequencer.APP_USERS}"
 }
 ]
 ```
-Example JSON structure for **CI_CONTACTS** table data:
+Example JSON structure for **APP_USERS** table data:
 
-[CI_CONTACTS.json](sequences/CI_CONTACTS.json )
+[APP_USERS.json](sequences/APP_USERS.json )
 ```json
   [
     {
-      "USER_ID": "$sequencer.CI_CONTACTS/${tag}.1",
+      "USER_ID": "$sequencer.APP_USERS/${tag}.1",
       "AUTHORITY": "ROLE_BUSINESS_OWNER",
       "CREATED_USER": 10
     },
     {
-      "USER_ID": "$sequencer.CI_CONTACTS/${tag}.2",
+      "USER_ID": "$sequencer.APP_USERS/${tag}.2",
       "AUTHORITY": "ROLE_BUSINESS_OWNER",
       "CREATED_USER": 11
     }
@@ -345,7 +345,7 @@ Where:
 - tag will be replaced with the test case tag
 - sequencer is global variable that holds sequence values for each table
 - /${tag}.1 is used to generate unique id link as cross file reference
-- after AsTableRecords UDF is used to convert data to table records,  each record within each test case can be accessible by $CI_CONTACTS.${tag}.X expression
+- after AsTableRecords UDF is used to convert data to table records,  each record within each test case can be accessible by $APP_USERS.${tag}.X expression
 
 #### Database/DSN Registration:
 

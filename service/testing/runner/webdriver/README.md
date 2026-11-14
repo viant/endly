@@ -273,7 +273,7 @@ Alternatively, set only `ENDLY_CHROME_DEBUGGER_ADDRESS=127.0.0.1:9222` to run th
 ```yaml
 commands:
   - rows = (css selector:table.report).TableData('objects')
-  - rows = (css selector:table.report).TableData('objects:date,campaign,impressions,spend')
+  - rows = (css selector:table.report).TableData('objects:date,job,items,spend')
 ```
 
 Formats: `objects` (structured records), `json`, `csv`, and `tabular` (all rows,
