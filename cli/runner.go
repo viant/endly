@@ -613,7 +613,7 @@ func (r *Runner) reportTagSummary() {
 func (r *Runner) reportEvent(context *endly.Context, event msg.Event, filter map[string]bool) error {
 	eventTag := r.EventTag()
 	r.processEvent(event, filter)
-	eventTag.AddEvent(event)
+	eventTag.AddEvent(retainReportEvent(event))
 	return nil
 }
 
